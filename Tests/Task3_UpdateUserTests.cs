@@ -15,10 +15,15 @@ namespace Tests
         [Test]
         public async Task Test1_Code204_WhenAllIsFine()
         {
-            var createdUserId = await CreateUser(new
+            var createdUserResponse = await CreateUser(new
             {
                 login = "anonymous"
             });
+
+            var createdUserId = JObject.Parse(createdUserResponse.ToString())["id"]!.ToString();
+            Console.WriteLine("------------");
+            Console.WriteLine(createdUserId);
+            Console.WriteLine("------------");
 
             var request = new HttpRequestMessage();
             request.Method = HttpMethod.Put;
@@ -31,7 +36,7 @@ namespace Tests
                 lastName = "V"
             }.SerializeToJsonContent();
             var response = await HttpClient.SendAsync(request);
-
+            Console.WriteLine(response);
             response.StatusCode.Should().Be(HttpStatusCode.NoContent);
             response.ShouldNotHaveHeader("Content-Type");
 

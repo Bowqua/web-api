@@ -47,7 +47,7 @@ public class UsersController : Controller
         {
             return UnprocessableEntity(ModelState);
         }
-
+        
         var userEntity = mapper.Map<UserEntity>(user);
         var createdUserEntity = userRepository.Insert(userEntity);
         
@@ -57,5 +57,40 @@ public class UsersController : Controller
             nameof(GetUserById),
             new { userId = createdUserEntity.Id },
             userDto);
+    }
+    
+    [HttpPut("{userId}")]
+    public IActionResult UpdateUser([FromRoute] string userId, [FromBody] UpdateUserDto? user)
+    {
+        if (user == null)
+        {
+            return BadRequest();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return UnprocessableEntity(ModelState);
+        }
+
+        if (!Guid.TryParse(userId, out var userGuid))
+        {
+            return BadRequest();
+        }
+        
+        var userEntity = mapper.Map(user, new UserEntity(userGuid));
+
+        userRepository.UpdateOrInsert(userEntity, out var isInserted);
+
+        if (isInserted)
+        {
+            var userDto = mapper.Map<UserDto>(userEntity);
+
+            return CreatedAtRoute(
+                nameof(GetUserById),
+                new { userId = userEntity.Id },
+                userDto);
+        }
+
+        return NoContent();
     }
 }

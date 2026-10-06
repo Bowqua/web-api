@@ -1,10 +1,16 @@
-    using System.ComponentModel;
-    using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
-    namespace WebApi.MinimalApi.Models;
+namespace WebApi.MinimalApi.Models;
 
-    public record AddUserDto(
-        [Required] string Login,
-        [property: DefaultValue("John")] string FirstName = "John",
-        [property: DefaultValue("Doe")] string LastName = "Doe"
-    );  
+public class AddUserDto
+{
+    [Required]
+    public string Login { get; set; }
+
+    [DefaultValue("John")]
+    public string FirstName { get; set; } = "John";
+
+    [DefaultValue("Doe")]
+    public string LastName { get; set; } = "Doe";
+}
