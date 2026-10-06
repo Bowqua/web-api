@@ -9,9 +9,8 @@ namespace WebApi.MinimalApi.Controllers;
 [ApiController]
 public class UsersController : Controller
 {
-    // Чтобы ASP.NET положил что-то в userRepository требуется конфигурация
-    private IUserRepository userRepository;
-    private IMapper mapper;
+    private readonly IUserRepository userRepository;
+    private readonly IMapper mapper;
     
     public UsersController(IUserRepository userRepository, IMapper mapper)
     {
@@ -19,21 +18,44 @@ public class UsersController : Controller
         this.mapper = mapper;
     }
 
-    [HttpGet("{userId:guid}")]
+    [HttpGet("{userId}", Name = nameof(GetUserById))]
     [Produces("application/json", "application/xml")]
     public ActionResult<UserDto> GetUserById([FromRoute] Guid userId)
     {
-        var src = userRepository.FindById(userId);
-        if (src == null)
+        var userEntity = userRepository.FindById(userId);
+        if (userEntity == null)
             return NotFound();
         
-        var userDto = mapper.Map<UserDto>(src);
+        var userDto = mapper.Map<UserDto>(userEntity);
         return Ok(userDto);
     }
 
     [HttpPost]
-    public IActionResult CreateUser([FromBody] object user)
+    public IActionResult CreateUser([FromBody] AddUserDto? user)
     {
-        throw new NotImplementedException();
+        if (user == null)
+        {
+            return BadRequest();
+        }
+        
+        if (!string.IsNullOrEmpty(user.Login) && !user.Login.All(char.IsLetterOrDigit))
+        {
+            ModelState.AddModelError("Login", "Login should contain only letters and digits");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return UnprocessableEntity(ModelState);
+        }
+
+        var userEntity = mapper.Map<UserEntity>(user);
+        var createdUserEntity = userRepository.Insert(userEntity);
+        
+        var userDto = mapper.Map<UserDto>(createdUserEntity);
+
+        return CreatedAtRoute(
+            nameof(GetUserById),
+            new { userId = createdUserEntity.Id },
+            userDto);
     }
 }
