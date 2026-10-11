@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.JsonPatch;
 using WebApi.MinimalApi.Domain;
 using WebApi.MinimalApi.Models;
 using AutoMapper;
@@ -92,5 +93,73 @@ public class UsersController : Controller
         }
 
         return NoContent();
+    }
+
+    [HttpPatch("{userId}")]
+    public IActionResult PartiallyUpdateUser([FromRoute] string userId, [FromBody] JsonPatchDocument<UpdateUserDto>? patchDoc)
+    {
+        if (patchDoc == null)
+            return BadRequest();
+        
+        if (!Guid.TryParse(userId, out var userGuid))
+            return NotFound();
+        
+        var userEntity = userRepository.FindById(userGuid);
+        if (userEntity == null)
+            return NotFound();
+
+        var updateDto = new UpdateUserDto
+        {
+            Login = userEntity.Login,
+            FirstName = userEntity.FirstName,
+            LastName = userEntity.LastName,
+        };
+        
+        patchDoc.ApplyTo(updateDto, ModelState);
+        if (ModelState.IsValid)
+            TryValidateModel(updateDto);
+        
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.ToDictionary(
+                entry => char.ToLowerInvariant(entry.Key[0]) + entry.Key[1..],
+                entry => entry.Value.Errors.Select(error => error.ErrorMessage).ToArray()
+            );
+
+            return UnprocessableEntity(errors);
+        }
+        
+        mapper.Map(updateDto, userEntity);
+        userRepository.Update(userEntity);
+        
+        return NoContent();
+    }
+
+    [HttpDelete("{userId}")]
+    public IActionResult DeleteUser([FromRoute] string userId)
+    {
+        if (!Guid.TryParse(userId, out var userGuid))
+            return NotFound();
+        
+        var userEntity = userRepository.FindById(userGuid);
+        if (userEntity == null)
+            return NotFound();
+        
+        userRepository.Delete(userGuid);
+        return NoContent();
+    }
+
+    [HttpHead("{userId}")]
+    public IActionResult HeadUserById([FromRoute] string userId)
+    {
+        if (!Guid.TryParse(userId, out var userGuid))
+            return NotFound();
+        
+        var userEntity = userRepository.FindById(userGuid);
+        if (userEntity == null)
+            return NotFound();
+        
+        Response.ContentType = "application/json; charset=utf-8";
+        return Ok();
     }
 }
