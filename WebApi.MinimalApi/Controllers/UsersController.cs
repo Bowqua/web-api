@@ -194,4 +194,11 @@ public class UsersController : Controller
         Response.ContentType = "application/json; charset=utf-8";
         return Ok();
     }
+
+    [HttpOptions]
+    public IActionResult GetUsersOptions()
+    {
+        Response.Headers.Allow = "GET, POST, OPTIONS";
+        return Ok();
+    }
 }
