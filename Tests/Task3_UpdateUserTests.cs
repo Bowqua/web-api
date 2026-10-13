@@ -15,16 +15,10 @@ namespace Tests
         [Test]
         public async Task Test1_Code204_WhenAllIsFine()
         {
-            var createdUserResponse = await CreateUser(new
+            var createdUserId = await CreateUser(new
             {
                 login = "anonymous"
             });
-
-            var createdUserId = JObject.Parse(createdUserResponse.ToString())["id"]!.ToString();
-            Console.WriteLine("------------");
-            Console.WriteLine(createdUserId);
-            Console.WriteLine("------------");
-
             var request = new HttpRequestMessage();
             request.Method = HttpMethod.Put;
             request.RequestUri = BuildUsersByIdUri(createdUserId);
