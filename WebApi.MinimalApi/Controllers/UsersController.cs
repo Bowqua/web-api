@@ -182,6 +182,7 @@ public class UsersController : Controller
     }
 
     [HttpHead("{userId}")]
+    [Produces("application/json", "application/xml")]
     public IActionResult HeadUserById([FromRoute] string userId)
     {
         if (!Guid.TryParse(userId, out var userGuid))
@@ -191,8 +192,10 @@ public class UsersController : Controller
         if (userEntity == null)
             return NotFound();
         
-        Response.ContentType = "application/json; charset=utf-8";
-        return Ok();
+        var userDto = mapper.Map<UserDto>(userEntity);
+        Response.Body = Stream.Null;
+        
+        return Ok(userDto);
     }
 
     [HttpOptions]
